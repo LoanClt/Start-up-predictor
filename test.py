@@ -30,6 +30,7 @@ def enregistrer_carnet(fichier, carnet):
             adresse = contact["adresse"]
             ligne = f"{nom}///STOP///{prenom}///STOP///{adresse}\n"
             f.write(ligne)
+          time.sleep()
             
 def trier_carnet(carnet):
     return sort(carnet)
