@@ -1,0 +1,697 @@
+<documents>
+<document index="1">
+<source>data_loader.py</source>
+<document_content>
+import pandas as pd
+
+class DataLoader:
+    def __init__(self):
+        self.companies = None
+        self.people = None
+        self.relationships = None
+        self.investments = None
+        self.offices = None
+        self.funding_rounds = None
+        
+    def load_data(self, n_rows=200):  # Add n_rows parameter with default None
+        """Load all CSV files into pandas DataFrames
+        Args:
+            n_rows (int, optional): Number of rows to read from each file. If None, read all rows.
+        """
+        try:
+            self.people = pd.read_csv('data/people.csv', nrows=n_rows)
+            self.relationships = pd.read_csv('data/relationships.csv', nrows=n_rows)
+            self.investments = pd.read_csv('data/investments.csv', nrows=n_rows)
+            self.offices = pd.read_csv('data/offices.csv', nrows=n_rows)
+            self.funding_rounds = pd.read_csv('data/funding_rounds.csv', nrows=n_rows)
+            return True
+        except Exception as e:
+            print(f"Error loading data: {e}")
+            return False
+    
+    def get_startup_locations(self):
+        """Return offices data for mapping"""
+        if self.offices is not None:
+            return self.offices[['object_id', 'city', 'state_code', 'country_code', 
+                                'latitude', 'longitude', 'region']].dropna(subset=['latitude', 'longitude'])
+        return pd.DataFrame()
+</document_content>
+</document>
+<document index="2">
+<source>main.py</source>
+<document_content>
+import sys
+from PyQt5.QtWidgets import QApplication
+from mainwindow import MainWindow
+
+def main():
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    main()
+
+</document_content>
+</document>
+<document index="3">
+<source>mainwindow.py</source>
+<document_content>
+from PyQt5.QtWidgets import QMainWindow, QTabWidget, QWidget, QVBoxLayout
+from tabs.map_tab import MapTab
+from tabs.data_tab import DataTab
+from tabs.network_tab import NetworkTab
+from tabs.prediction_tab import PredictionTab
+from tabs.investment_analysis_tab import InvestmentAnalysisTab  # Add this import
+
+class MainWindow(QMainWindow):
+  def __init__(self):
+      super().__init__()
+      self.setWindowTitle("Startup Analysis Tool")
+      self.setGeometry(100, 100, 1200, 800)
+      
+      # Create main widget and layout
+      main_widget = QWidget()
+      self.setCentralWidget(main_widget)
+      layout = QVBoxLayout(main_widget)
+      
+      # Create tab widget
+      tabs = QTabWidget()
+      
+      # Add tabs
+      tabs.addTab(MapTab(), "Startup Map")
+      tabs.addTab(DataTab(), "Data Explorer")
+      tabs.addTab(NetworkTab(), "Network Analysis")
+      tabs.addTab(PredictionTab(), "Success Prediction")
+      tabs.addTab(InvestmentAnalysisTab(), "Investment Analysis")  # Add new tab
+      
+      layout.addWidget(tabs)
+</document_content>
+</document>
+<document index="4">
+<source>project-to-xml.py</source>
+<document_content>
+import os
+
+def create_xml_from_project(project_path, include_extensions=None, exclude_files=None):
+  """Convert a project directory into the required XML format."""
+  if include_extensions is None:
+      include_extensions = []
+  if exclude_files is None:
+      exclude_files = []
+
+  xml_parts = ['<documents>']
+  index = 1
+  
+  for root, _, files in os.walk(project_path):
+      for file in files:
+          # Skip common files/directories you might want to exclude
+          if any(skip in file for skip in ['.git', '__pycache__', '.pyc', '.env']):
+              continue
+          
+          # Skip files based on the exclude list
+          if file in exclude_files:
+              continue
+          
+          # Check file extension if include_extensions is specified
+          if include_extensions and not any(file.endswith(ext) for ext in include_extensions):
+              continue
+
+          file_path = os.path.join(root, file)
+          try:
+              with open(file_path, 'r', encoding='utf-8') as f:
+                  content = f.read()
+                  
+              # Create relative path from project root
+              relative_path = os.path.relpath(file_path, project_path)
+              
+              xml_parts.append(f'<document index="{index}">')
+              xml_parts.append(f'<source>{relative_path}</source>')
+              xml_parts.append('<document_content>')
+              xml_parts.append(content)
+              xml_parts.append('</document_content>')
+              xml_parts.append('</document>')
+              
+              index += 1
+          except UnicodeDecodeError:
+              print(f"Skipping binary file: {file_path}")
+          except Exception as e:
+              print(f"Error processing {file_path}: {e}")
+  
+  xml_parts.append('</documents>')
+  return '\n'.join(xml_parts)
+
+# Usage
+if __name__ == "__main__":
+#   project_path = input("Enter the path to your project directory: ")
+#   include_extensions = input("Enter file extensions to include (comma-separated, e.g., .py,.txt): ").split(',')
+#   exclude_files = input("Enter specific file names to exclude (comma-separated): ").split(',')
+  
+  project_path = "C:/Users/enzo/Documents/03_Supop/PAI/Projet"  # Specify your project directory path here
+  include_extensions = ['.py', '.txt']    # Specify file extensions to include
+  exclude_files = []  # Specify file names to exclude
+
+
+  # Clean up input lists
+  include_extensions = [ext.strip() for ext in include_extensions if ext.strip()]
+  exclude_files = [file.strip() for file in exclude_files if file.strip()]
+
+  output_path = "project_dump.xml"
+  
+  xml_content = create_xml_from_project(project_path, include_extensions, exclude_files)
+  
+  with open(output_path, 'w', encoding='utf-8') as f:
+      f.write(xml_content)
+      
+  print(f"XML dump created at: {output_path}")
+</document_content>
+</document>
+<document index="5">
+<source>startup_analysis_main.py</source>
+<document_content>
+import sys
+from PyQt5.QtWidgets import QApplication
+from mainwindow import MainWindow
+
+def main():
+    app = QApplication(sys.argv)
+    window = MainWindow()
+    window.show()
+    sys.exit(app.exec_())
+
+if __name__ == '__main__':
+    main()
+
+</document_content>
+</document>
+<document index="6">
+<source>tabs\data_tab.py</source>
+<document_content>
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QComboBox,
+                           QTableView, QPushButton)
+from PyQt5.QtCore import Qt, QAbstractTableModel
+import pandas as pd
+from data_loader import DataLoader
+
+class PandasModel(QAbstractTableModel):
+    def __init__(self, data):
+        super().__init__()
+        self._data = data
+
+    def rowCount(self, parent=None):
+        return self._data.shape[0]
+
+    def columnCount(self, parent=None):
+        return self._data.shape[1]
+
+    def data(self, index, role=Qt.DisplayRole):
+        if role == Qt.DisplayRole:
+            value = self._data.iloc[index.row(), index.column()]
+            return str(value)
+        return None
+
+    def headerData(self, section, orientation, role):
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
+                return str(self._data.columns[section])
+            if orientation == Qt.Vertical:
+                return str(self._data.index[section])
+        return None
+
+class DataTab(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.data_loader = DataLoader()
+        self.init_ui()
+        
+    def init_ui(self):
+        layout = QVBoxLayout(self)
+        
+        # Controls
+        controls_layout = QHBoxLayout()
+        self.table_selector = QComboBox()
+        self.table_selector.addItems(['People', 'Relationships', 'Investments', 'Offices'])
+        controls_layout.addWidget(self.table_selector)
+        
+        export_btn = QPushButton("Export to Excel")
+        controls_layout.addWidget(export_btn)
+        
+        layout.addLayout(controls_layout)
+        
+        # Table view
+        self.table_view = QTableView()
+        layout.addWidget(self.table_view)
+        
+        # Connect signals
+        self.table_selector.currentTextChanged.connect(self.load_table)
+        export_btn.clicked.connect(self.export_to_excel)
+        
+        # Initial load
+        self.data_loader.load_data()
+        self.load_table(self.table_selector.currentText())
+        
+    def load_table(self, table_name):
+        if table_name == 'People':
+            data = self.data_loader.people
+        elif table_name == 'Relationships':
+            data = self.data_loader.relationships
+        elif table_name == 'Investments':
+            data = self.data_loader.investments
+        else:
+            data = self.data_loader.offices
+            
+        model = PandasModel(data)
+        self.table_view.setModel(model)
+        
+    def export_to_excel(self):
+        table_name = self.table_selector.currentText()
+        if hasattr(self.data_loader, table_name.lower()):
+            data = getattr(self.data_loader, table_name.lower())
+            data.to_excel(f"{table_name.lower()}_export.xlsx")
+
+</document_content>
+</document>
+<document index="7">
+<source>tabs\investment_analysis_tab.py</source>
+<document_content>
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QComboBox, 
+                          QPushButton, QLabel)
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+from data_loader import DataLoader
+
+class InvestmentAnalysisTab(QWidget):
+  def __init__(self):
+      super().__init__()
+      self.data_loader = DataLoader()
+      self.data_loader.load_data()
+      self.init_ui()
+      
+  def init_ui(self):
+      layout = QVBoxLayout(self)
+      
+      # Controls
+      controls_layout = QHBoxLayout()
+      
+      # Analysis type selector
+      self.analysis_selector = QComboBox()
+      self.analysis_selector.addItems([
+          'Investment Amounts Over Time',
+          'Investment Rounds Distribution',
+          'Average Investment by Category',
+          'Geographic Investment Distribution',
+          'Investment Growth Rate'
+      ])
+      controls_layout.addWidget(self.analysis_selector)
+      
+      # Update button
+      update_btn = QPushButton("Update Analysis")
+      update_btn.clicked.connect(self.update_analysis)
+      controls_layout.addWidget(update_btn)
+      
+      layout.addLayout(controls_layout)
+      
+      # Matplotlib figure
+      self.figure, self.ax = plt.subplots(figsize=(10, 6))
+      self.canvas = FigureCanvas(self.figure)
+      layout.addWidget(self.canvas)
+      
+      # Initial plot
+      self.update_analysis()
+      
+  def update_analysis(self):
+      analysis_type = self.analysis_selector.currentText()
+      self.ax.clear()
+      
+      if analysis_type == 'Investment Amounts Over Time':
+          self.plot_investment_trends()
+      elif analysis_type == 'Investment Rounds Distribution':
+          self.plot_round_distribution()
+      elif analysis_type == 'Average Investment by Category':
+          self.plot_category_averages()
+      elif analysis_type == 'Geographic Investment Distribution':
+          self.plot_geographic_distribution()
+      elif analysis_type == 'Investment Growth Rate':
+          self.plot_growth_rate()
+          
+      self.canvas.draw()
+      
+  def plot_investment_trends(self):
+      # Convert funding_rounds data to time series
+      df = self.data_loader.funding_rounds
+      df['funded_at'] = pd.to_datetime(df['funded_at'])
+      df = df.set_index('funded_at')
+      
+      # Resample by month and sum investments
+      monthly_investments = df['raised_amount_usd'].resample('ME').sum()
+      
+      # Plot
+      self.ax.plot(monthly_investments.index, monthly_investments.values)
+      self.ax.set_title('Monthly Investment Trends')
+      self.ax.set_xlabel('Date')
+      self.ax.set_ylabel('Total Investment (USD)')
+      plt.xticks(rotation=45)
+      
+  def plot_round_distribution(self):
+      df = self.data_loader.funding_rounds
+      round_counts = df['funding_round_type'].value_counts()
+      
+      # Plot
+      round_counts.plot(kind='bar', ax=self.ax)
+      self.ax.set_title('Distribution of Investment Rounds')
+      self.ax.set_xlabel('Round Type')
+      self.ax.set_ylabel('Count')
+      plt.xticks(rotation=45)
+      
+  def plot_category_averages(self):
+      df = self.data_loader.funding_rounds
+      avg_by_type = df.groupby('funding_round_type')['raised_amount_usd'].mean()
+      
+      # Plot
+      avg_by_type.plot(kind='bar', ax=self.ax)
+      self.ax.set_title('Average Investment by Round Type')
+      self.ax.set_xlabel('Round Type')
+      self.ax.set_ylabel('Average Amount (USD)')
+      plt.xticks(rotation=45)
+      
+  def plot_geographic_distribution(self):
+      # Merge funding rounds with offices data
+      df = pd.merge(
+          self.data_loader.funding_rounds,
+          self.data_loader.offices[['object_id', 'country_code']],
+          left_on='object_id',
+          right_on='object_id'
+      )
+      
+      country_totals = df.groupby('country_code')['raised_amount_usd'].sum()
+      
+      # Plot
+      country_totals.plot(kind='bar', ax=self.ax)
+      self.ax.set_title('Total Investment by Country')
+      self.ax.set_xlabel('Country')
+      self.ax.set_ylabel('Total Investment (USD)')
+      plt.xticks(rotation=45)
+      
+  def plot_growth_rate(self):
+      df = self.data_loader.funding_rounds
+      df['funded_at'] = pd.to_datetime(df['funded_at'])
+      df = df.set_index('funded_at')
+      
+      # Calculate year-over-year growth rate
+      yearly_investments = df['raised_amount_usd'].resample('Y').sum()
+      growth_rate = yearly_investments.pct_change() * 100
+      
+      # Plot
+      self.ax.plot(growth_rate.index, growth_rate.values)
+      self.ax.set_title('Year-over-Year Investment Growth Rate')
+      self.ax.set_xlabel('Year')
+      self.ax.set_ylabel('Growth Rate (%)')
+      plt.xticks(rotation=45)
+</document_content>
+</document>
+<document index="8">
+<source>tabs\map_tab.py</source>
+<document_content>
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
+                          QSpinBox, QComboBox, QPushButton,
+                          QGroupBox, QFormLayout)
+from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtCore import QUrl
+import folium
+from folium.plugins import MarkerCluster, HeatMap
+import tempfile
+import pandas as pd
+from data_loader import DataLoader
+
+class MapTab(QWidget):
+  def __init__(self):
+      super().__init__()
+      self.layout = QVBoxLayout(self)
+      self.data_loader = DataLoader()
+      self.max_markers = 100  # Default max markers
+      self.init_ui()
+      
+  def init_ui(self):
+      # Create filter controls
+      filter_group = QGroupBox("Filters")
+      filter_layout = QFormLayout()
+      
+      # Number of companies filter
+      self.company_count = QSpinBox()
+      self.company_count.setRange(1, 1000)
+      self.company_count.setValue(100)
+      self.company_count.setToolTip("Maximum number of companies to display")
+      filter_layout.addRow("Max Companies:", self.company_count)
+      
+      # Region filter
+      self.region_filter = QComboBox()
+      self.region_filter.addItems([
+          "All Regions",
+          "SF Bay",
+          "New York",
+          "Los Angeles",
+          "Seattle",
+          "Other"
+      ])
+      filter_layout.addRow("Region:", self.region_filter)
+      
+      # Country filter
+      self.country_filter = QComboBox()
+      self.country_filter.addItems([
+          "All Countries",
+          "USA",
+          "Other"
+      ])
+      filter_layout.addRow("Country:", self.country_filter)
+      
+      # Display type selector
+      self.display_type = QComboBox()
+      self.display_type.addItems([
+          "Individual Markers",
+          "Clustered Markers",
+          "Heat Map"
+      ])
+      filter_layout.addRow("Display Type:", self.display_type)
+      
+      # Update button
+      update_btn = QPushButton("Update Map")
+      update_btn.clicked.connect(self.update_map)
+      filter_layout.addRow(update_btn)
+      
+      filter_group.setLayout(filter_layout)
+      
+      # Add filters to main layout
+      self.layout.addWidget(filter_group)
+      
+      # Create map view
+      self.web_view = QWebEngineView()
+      self.layout.addWidget(self.web_view)
+      
+      # Load initial map
+      self.load_map()
+      
+  def filter_data(self, locations):
+      """Apply filters to the location data"""
+      try:
+          # Get filter values
+          max_companies = self.company_count.value()
+          region = self.region_filter.currentText()
+          country = self.country_filter.currentText()
+          
+          # Apply filters
+          filtered = locations.copy()
+          
+          # Region filter
+          if region != "All Regions":
+              if region == "Other":
+                  known_regions = ["SF Bay", "New York", "Los Angeles", "Seattle"]
+                  filtered = filtered[~filtered['region'].isin(known_regions)]
+              else:
+                  filtered = filtered[filtered['region'] == region]
+                  
+          # Country filter
+          if country != "All Countries":
+              if country == "Other":
+                  filtered = filtered[filtered['country_code'] != "USA"]
+              else:
+                  filtered = filtered[filtered['country_code'] == country]
+          
+          # Limit number of companies
+          filtered = filtered.head(max_companies)
+          
+          return filtered
+          
+      except Exception as e:
+          print(f"Error in filter_data: {e}")
+          # Return limited unfiltered data as fallback
+          return locations.head(self.company_count.value())
+      
+  def load_map(self):
+      # Load startup location data
+      self.data_loader.load_data()
+      locations = self.data_loader.get_startup_locations()
+      
+      # Apply filters
+      filtered_locations = self.filter_data(locations)
+      
+      # Create base map centered on US
+      m = folium.Map(location=[39.8283, -98.5795], zoom_start=4)
+      
+      display_type = self.display_type.currentText()
+      
+      if display_type == "Clustered Markers":
+          # Create marker cluster
+          marker_cluster = MarkerCluster()
+          
+          for _, row in filtered_locations.iterrows():
+              if pd.notnull(row['latitude']) and pd.notnull(row['longitude']):
+                  popup_text = (
+                      f"City: {row['city']}<br>"
+                      f"State: {row['state_code']}<br>"
+                      f"Region: {row['region']}<br>"
+                      f"Country: {row['country_code']}"
+                  )
+                  folium.Marker(
+                      [row['latitude'], row['longitude']],
+                      popup=popup_text
+                  ).add_to(marker_cluster)
+                  
+          marker_cluster.add_to(m)
+          
+      elif display_type == "Heat Map":
+          # Create heat map layer
+          heat_data = [[row['latitude'], row['longitude']] for _, row in filtered_locations.iterrows()
+                      if pd.notnull(row['latitude']) and pd.notnull(row['longitude'])]
+          HeatMap(heat_data).add_to(m)
+          
+      else:  # Individual Markers
+          for _, row in filtered_locations.iterrows():
+              if pd.notnull(row['latitude']) and pd.notnull(row['longitude']):
+                  popup_text = (
+                      f"City: {row['city']}<br>"
+                      f"State: {row['state_code']}<br>"
+                      f"Region: {row['region']}<br>"
+                      f"Country: {row['country_code']}"
+                  )
+                  folium.Marker(
+                      [row['latitude'], row['longitude']],
+                      popup=popup_text
+                  ).add_to(m)
+      
+      # Save to temporary file and display
+      temp_file = tempfile.NamedTemporaryFile(suffix=".html", delete=False)
+      m.save(temp_file.name)
+      self.web_view.setUrl(QUrl.fromLocalFile(temp_file.name))
+      
+  def update_map(self):
+      """Reload the map with current filter settings"""
+      self.load_map()
+</document_content>
+</document>
+<document index="9">
+<source>tabs\network_tab.py</source>
+<document_content>
+from PyQt5.QtWidgets import QWidget, QVBoxLayout
+import networkx as nx
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from data_loader import DataLoader
+
+class NetworkTab(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.data_loader = DataLoader()
+        self.init_ui()
+        
+    def init_ui(self):
+        layout = QVBoxLayout(self)
+        
+        # Create the network visualization
+        figure = plt.figure(figsize=(10, 8))
+        canvas = FigureCanvas(figure)
+        layout.addWidget(canvas)
+        
+        # Load and display network
+        self.data_loader.load_data()
+        self.create_network(figure)
+        
+    def create_network(self, figure):
+        # Create network from relationships data
+        G = nx.Graph()
+        
+        # Add nodes and edges from relationships
+        if self.data_loader.relationships is not None:
+            for _, row in self.data_loader.relationships.iterrows():
+                G.add_edge(row['person_object_id'], row['relationship_object_id'])
+        
+        # Draw network
+        plt.clf()
+        nx.draw(G, with_labels=True, node_size=500, node_color='lightblue',
+                font_size=8, font_weight='bold')
+        plt.title("Startup Founder Network")
+
+</document_content>
+</document>
+<document index="10">
+<source>tabs\prediction_tab.py</source>
+<document_content>
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QFormLayout, QLineEdit,
+                           QPushButton, QLabel)
+from sklearn.ensemble import RandomForestClassifier
+import pandas as pd
+from data_loader import DataLoader
+
+class PredictionTab(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.data_loader = DataLoader()
+        self.init_ui()
+        
+    def init_ui(self):
+        layout = QVBoxLayout(self)
+        
+        # Create form for input
+        form = QFormLayout()
+        
+        self.university = QLineEdit()
+        form.addRow("University:", self.university)
+        
+        self.connections = QLineEdit()
+        form.addRow("Number of Connections:", self.connections)
+        
+        self.experience = QLineEdit()
+        form.addRow("Years of Experience:", self.experience)
+        
+        layout.addLayout(form)
+        
+        # Prediction button
+        predict_btn = QPushButton("Predict Success")
+        predict_btn.clicked.connect(self.predict_success)
+        layout.addWidget(predict_btn)
+        
+        # Result label
+        self.result_label = QLabel()
+        layout.addWidget(self.result_label)
+        
+    def predict_success(self):
+        # This is a simplified prediction model
+        connections = int(self.connections.text() or 0)
+        experience = int(self.experience.text() or 0)
+        
+        # Simple rule-based prediction
+        score = (connections * 0.6 + experience * 0.4) / 10
+        
+        self.result_label.setText(f"Predicted Success Rate: {score:.1f}/10")
+
+</document_content>
+</document>
+<document index="11">
+<source>tabs\__init__.py</source>
+<document_content>
+
+</document_content>
+</document>
+</documents>
